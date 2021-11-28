@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet"href="{{ url_for('static', filename='css/style.css') }}">
+        <title>{% block title %}{% endblock %}</title>
+    </head>
+
+    <body>
+    <header>
+        <h1>Bookshop</h1>
+        <nav>
+            <ul>
+                <li>
+                    <a href="/"><button  type="button"> Home </button></a>
+                    <a href="/stock_levels"><button  type="button"> stock levels </button></a>
+                    <a href="/cart"><button  type="button"> Cart </button></a>
+                    <a href="/login"><button  type="button"> login </button></a>
+                    <a href="/logout"><button  type="button"> logout </button></a><br>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    {% block cart %}{% endblock %}
+    {% block content %}
+    {% endblock %}
+    </body>
+
+</html>

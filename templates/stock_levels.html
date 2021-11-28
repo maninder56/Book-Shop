@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %} Home Page {% endblock %}
+
+
+
+{% block content %}
+
+{% with messages = get_flashed_messages() %}
+    {%if messages %}
+        {% for msg in messages%}
+            <p>{{msg}}</p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+
+<div>
+    <h2>Stock Levels</h2>
+    <ul>
+        <a href="/add_stock"><button  type="button"> Add stock </button></a>
+    </ul>
+
+    <div>
+    {% for book in books %}
+        <div>
+            <ul>
+                <div><img src="/static/images/product_images/{{ book[0] }}" alt="display this" width=190.5 height=292.25></div>
+                <lable>Tittle:{{ book[1] }}</lable><br>
+                <lable> ISBN-13 number: {{ book[2] }} </lable><br>
+                <lable> Quantity: {{ book[3] }} </lable><br>
+            </ul>
+        </div>
+    {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}
