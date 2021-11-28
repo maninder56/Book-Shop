@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %} cart {% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages() %}
+    {%if messages %}
+        {% for msg in messages%}
+            <p>{{msg}}</p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+
+
+
+<div>
+    <h2>Your Cart</h2>
+    <a href="/empty_cart"><button  type="button"> Clear cart </button></a><br>
+    <div class="books">
+        {% for list in cart_books %}
+            <ul>
+                <img src="/static/{{ list[1] }}" alt="display this" width=190.5 height=292.25><br>
+                {{ list[0] }}<br>
+                Retail Price: £{{ list[2] }}
+            </ul>
+        {% endfor %}
+    </div>
+    
+
+</div>
+
+
+
+
+{% endblock %}
