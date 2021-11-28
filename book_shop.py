@@ -101,30 +101,32 @@ def do_login(username, password):
         session['user'] = request.form['uname'] # set user in session 
 
         if str(admin_data[0]) =='1': # if admin data is True 
-            session['admin'] = str(admin_data[0])
-            flash("You have been logged in as Admin", "info")
-            return redirect(url_for('home'))
+            session['admin'] = str(admin_data[0]) #set admin session 
+            flash("You have been logged in as Admin", "info") # message about successful login as admin 
+            return redirect(url_for('home')) # redirect to home 
 
-        # add message: logged in as ____
-        flash("You have been logged in", "info")
+        
+        flash("You have been logged in", "info") # message about successful login as user
         return redirect(url_for('home'))
 
     #show message: username or password incorect
     flash("username or password incorrect ", "info")
     return redirect(url_for('login'))
 
-#logout
+
 @app.route('/logout')
+#logout function clears user and admin session 
 def logout():
-    session.pop('user', None)
-    session.pop('admin', None)
-    flash("You have been logged out","info")
-    return redirect(url_for('home'))
+    session.pop('user', None) # set user sesson to None 
+    session.pop('admin', None) # set admin sesson to NOne 
+    flash("You have been logged out","info") # message about user have been logged out 
+    return redirect(url_for('home')) 
 
 
 
-#stocks should display the books that have been added to stock using the form from
+
 @app.route('/stock_levels')
+#stocks_level function displays the books that have been added to stock using the form 
 @admin_login_required
 def stock_levels():
     conn = sqlite3.connect('book_shop.sqlite3')
@@ -136,15 +138,18 @@ def stock_levels():
     return render_template('stock_levels.html', books=book_data)
 
 
+path= os.getcwd() # get path of current directory 
+filename = 'static' # set folder 
+file_path = os.path.join(path,filename) # join the path to the folder 
 
-app.config["picture_path"]= 'C:/Users/User/Google Drive/Uni/Year_2/Semester_1/Software Engineering/Code/Practice/Website/static/images/product_images'
 
-#a form where they can add new books to the system
+
 @app.route('/add_stock', methods=['GET', 'POST'])
-@admin_login_required
+@admin_login_required # restrict access to add stock 
+#add_stock function saves book info from form 
 def add_stock():
     if request.method == 'POST':
-        book_name = request.form['book_name']
+        book_name = request.form['book_name'] # get form information 
         book_author = request.form['book_author']
         book_date = request.form['book_date']
         book_ISBN = request.form['book_ISBN']
@@ -155,29 +160,35 @@ def add_stock():
         book_quantity = request.form['book_quantity']
 
         try:
-            # add function to automatically add book_id
             conn = sqlite3.connect('book_shop.sqlite3')
             cur = conn.cursor()
 
             cur.execute(f"SELECT book_quantity FROM stock WHERE book_ISBN ='{book_ISBN}' ;")
             quantity_data = cur.fetchone()
 
-            if quantity_data is None:
-                # for testing sql will replace data
-                cur.execute(f"INSERT OR REPLACE INTO stock VALUES ('{book_name}','{book_author}','{book_date}','{book_ISBN}','{book_description}','{str(book_picture.filename)}',{book_trade_price},{book_retail_price},{book_quantity});")
-                conn.commit()
-                conn.close()
-
-                if book_picture.filename != '':
-                    book_picture.save(os.path.join(app.config['picture_path'], book_picture.filename))
-                    print(book_picture)
+            if quantity_data is None: # checks if there is book in stock already 
+                if book_picture.filename != '': # checks image is not submitted emply 
+                    book_picture.save(os.path.join(file_path, book_picture.filename)) # saves image 
+                    cur.execute(f"INSERT INTO stock VALUES ('{book_name}',\
+                                                        '{book_author}',\
+                                                        '{book_date}',\
+                                                        '{book_ISBN}',\
+                                                        '{book_description}',\
+                                                        '{str(book_picture.filename)}',\
+                                                        {book_trade_price},\
+                                                        {book_retail_price},\
+                                                        {book_quantity});") #add book in stock
+                    conn.commit()
+                    conn.close()
                     flash("Book has been added to stock", "info")  # message about book has been saved
                     return add_book_form()
+                
 
             else:
-                # update book quantity if ISBN number is same
-                new_quantity_data = quantity_data[0] + int(book_quantity)
-                cur.execute(f"UPDATE stock SET book_quantity = {new_quantity_data} WHERE book_ISBN = '{book_ISBN}' ;")
+                # updates book quantity if ISBN number is same
+                new_quantity_data = quantity_data[0] + int(book_quantity) # increase quantity of book in stock 
+                cur.execute(f"UPDATE stock SET book_quantity = {new_quantity_data} \
+                             WHERE book_ISBN = '{book_ISBN}' ;") # updates stock 
                 conn.commit()
                 flash("Book has been added to stock", "info")  # message about book has been saved
                 return add_book_form()
@@ -185,53 +196,52 @@ def add_stock():
 
         # add message about book has been saved successfully
         except Exception as error:
-            flash("Error", "info")
+            flash("Error", "info")# give Error 
             print(error)
             return add_book_form()
     else:
-        return add_book_form()
+        return add_book_form() 
 
 def add_book_form():
     return render_template('add_stock.html', add_book_form=url_for('add_stock'))
 
 
-
-
 order_list = []
 
 @app.route('/cart', methods=['GET', 'POST'])
+#cart function saves books added in cart
 def cart():
-    cart_list = {}
+    cart_list = {} #saves books in dictionary 
     for item in order_list:
         quantity= 0
         for book in order_list:
-            if book == item:
-                quantity += 1
-        cart_list[item] = quantity
+            if book == item: # check for duplicate items in order list 
+                quantity += 1 # increase quantity if these is duplicate 
+        cart_list[item] = quantity # save book with quantity 
     
 
     cart_book = []
-    for books in cart_list.keys():
-        cart_book.append(books)
+    for books in cart_list.keys(): # to get book ISBN number 
+        cart_book.append(books) 
    
-    book_data = []
-    for book in cart_book:
+    book_data = [] 
+    for book in cart_book: # get book info from database
         conn = sqlite3.connect('book_shop.sqlite3')
         cur = conn.cursor()
         cur.execute(f"SELECT book_name, book_picture, book_retail_price FROM stock WHERE  book_ISBN = {book} ;")
         book_list = cur.fetchone()
-        book_data.append(book_list)
+        book_data.append(book_list) #saves book information in book_data 
 
 
-    return render_template('cart.html', cart_=cart_list, cart_books = book_data)
+    return render_template('cart.html', cart_books = book_data)
 
 
 
 @app.route('/empty_cart', methods=['GET', 'POST'])
 def empty_cart():
-    order_list.clear()
-    session.pop('items', None)
-    session.pop('price', None)
+    order_list.clear() # empty cart 
+    session.pop('items', None) # clear session data 
+    session.pop('price', None) # clear session data 
     flash("Your cart has been Cleared")
     return redirect(url_for('home'))
 
@@ -239,25 +249,24 @@ def empty_cart():
 
 
 @app.route('/add_to_cart', methods=['GET', 'POST'])
-def add_to_cart():
-    #make data base for products
+def add_to_cart(): 
     if request.method == 'POST':
         conn = sqlite3.connect('book_shop.sqlite3')
         cur = conn.cursor()
         item = request.form['item']
         int_item = int(item)
-        order_list.append(int_item)
+        order_list.append(int_item) # add book in order list 
         total_price = 0
         for list in order_list:
-            cur.execute(f"SELECT book_retail_price FROM stock where book_ISBN = '{list}';")
+            cur.execute(f"SELECT book_retail_price FROM stock where book_ISBN = '{list}';") # get book price from database 
             book_data = cur.fetchone()
             book_data = book_data[0]
-            total_price = total_price + book_data
+            total_price = total_price + book_data # add total price of the books 
 
         conn.commit()
         conn.close()
-        session['items'] = len(order_list)
-        session['price'] = round(total_price, 2)
+        session['items'] = len(order_list) # get total numbers of books added 
+        session['price'] = round(total_price, 2) #get total price 
         return redirect(url_for('home'))
 
 
